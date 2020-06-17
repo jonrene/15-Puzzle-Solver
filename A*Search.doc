@@ -1,0 +1,507 @@
+# Jonathan Rene
+# 15 Puzzle Game Code
+# CAP4630
+# 11/30/19
+
+# This defines the goal state. Will be used later on for comparisions
+GOALSTATE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0]
+
+# preprocessor directives
+import copy, sys, os
+
+# Disable printing for unwanted garbage printing
+def blockPrint():
+  sys.stdout = open(os.devnull, 'w')
+
+# Restore printing
+def enablePrint():
+  sys.stdout = sys.__stdout__
+
+# Node strucure used for manhattan search
+class ManNode:
+    def __init__(self, level, matrix, parentnode, cantmove):
+        self.state = copy.deepcopy(matrix)
+        self.parent = parentnode
+        self.children = []
+        self.level = level
+        self.cantmove = cantmove
+        self.val = Manhattan(self.state) + level
+
+# Node strucure used for manhattan search
+class TileNode:
+    def __init__(self, level, matrix, parentnode, cantmove):
+        self.state = copy.deepcopy(matrix)
+        self.parent = parentnode
+        self.children = []
+        self.level = level
+        self.cantmove = cantmove
+        self.val = MisplacedTiles(self.state) + level
+
+# This calculates the number of misplaced tiles of a board in
+# comaparison to the goal state
+def MisplacedTiles(List):
+    LTM = copy.deepcopy(List)
+    GTM = Tomatrix(GOALSTATE)
+
+    total = 0
+
+    for x in range(0, 4):
+      for y in range(0, 4):
+        if LTM[x][y] != GTM[x][y]:
+          total += 1
+    
+
+    return total - 1
+
+
+# Turns a list into a matrix for easier calculations
+def Tomatrix(List):
+
+    matrix = []
+
+    matrix.append(List[0:4])
+    matrix.append(List[4:8])
+    matrix.append(List[8:12])
+    matrix.append(List[12:16])
+
+    return matrix
+
+
+# Gets y/row of a value in a given matrix
+def GetY(matrix, val):
+    for x in matrix:
+        for y in x:
+            if y == val:
+                return matrix.index(x) + 1
+
+
+# Gets x/column of a value in a given matrix
+def GetX(matrix, val):
+    for x in matrix:
+        for y in x:
+            if y == val:
+                return x.index(y) + 1
+
+
+# Calculates manhattan distance of a matrix
+def Manhattan(List):
+    # changes goalstate and board list to matrix
+    LTM = copy.deepcopy(List)
+    GTM = Tomatrix(GOALSTATE)
+
+    totalX = 0
+    totalY = 0
+    # calculates total distance each tile travels in x and y direction
+    for x in range(0, 4):
+        for y in range(0, 4):
+            if (LTM[x][y] != GTM[x][y]) and (LTM[x][y] != 0):
+                totalX += abs(GetX(GTM, LTM[x][y]) - GetX(LTM, LTM[x][y]))
+                totalY += abs(GetY(GTM, LTM[x][y]) - GetY(LTM, LTM[x][y]))
+
+    return totalX + totalY
+
+
+# This calculates if the board can be solved using Nmod2 property of puzzle game
+def CanCalc(List):
+    try:
+        N = 0
+        # Checks to see how many tiles appear after each tile that is less than it
+        for x in range(0, len(List)):
+            for y in range(x + 1, len(List)):
+                if List[y] < List[x] and List[y] != 0:
+                    N += 1
+
+        #finds where on board empty tile is located
+
+        place = List.index(0)
+
+        if place >= 0 and place <= 3:
+            N += 1
+
+        elif place >= 4 and place <= 7:
+            N += 2
+
+        elif place >= 8 and place <= 11:
+            N += 3
+
+        else:
+            N += 4
+
+        if N % 2 != 0:
+            return False
+
+        else:
+            return True
+    except ValueError:
+        print("\nSomething went wrong.")
+
+
+# Function sees if empty space can move in a certain direction
+def CanMove(matrix, direct):
+    # sees if empty tile can move up
+    if direct == 1:
+        emptyspace = GetY(matrix, 0)
+        if emptyspace != 1:
+            return True
+        else:
+            return False
+    # sees if emptytile can move down
+    if direct == 2:
+        emptyspace = GetY(matrix, 0)
+        print(emptyspace)
+        if emptyspace != 4:
+            return True
+        else:
+            return False
+    # sees if empty tile can move left
+    if direct == 3:
+        emptyspace = GetX(matrix, 0)
+        print(emptyspace)
+        if emptyspace != 1:
+            return True
+        else:
+            return False
+    # sees if empty tile can move right
+    if direct == 4:
+        emptyspace = GetX(matrix, 0)
+        print(emptyspace)
+        if emptyspace != 4:
+            return True
+        else:
+            return False
+
+
+# This function moves empty tile up
+def MoveUP(matrix):
+    temp = copy.deepcopy(matrix)
+    x = GetX(temp, 0) - 1
+    y = GetY(temp, 0) - 1
+
+    temp[y][x], temp[y - 1][x] = temp[y - 1][x], temp[y][x]
+
+    return temp
+
+
+# This function moves empty tile down
+def MoveDown(matrix):
+    temp = copy.deepcopy(matrix)
+    x = GetX(temp, 0) - 1
+    y = GetY(temp, 0) - 1
+
+    temp[y][x], temp[y + 1][x] = temp[y + 1][x], temp[y][x]
+
+    return temp
+
+
+# This function moves empty tile left
+def MoveLeft(matrix):
+    temp = copy.deepcopy(matrix)
+    x = GetX(temp, 0) - 1
+    y = GetY(temp, 0) - 1
+
+    temp[y][x], temp[y][x - 1] = temp[y][x - 1], temp[y][x]
+
+    return temp
+
+
+# This function moves empty tile right
+def MoveRight(matrix):
+    temp = copy.deepcopy(matrix)
+    x = GetX(temp, 0) - 1
+    y = GetY(temp, 0) - 1
+
+    temp[y][x], temp[y][x + 1] = temp[y][x + 1], temp[y][x]
+
+    return temp
+
+
+#This finds solution using manhattan heuristic
+def ManhattanSearch(matrix):
+
+  Mymatrix = copy.deepcopy(matrix) #copies given matrix
+  openlist = [] #stores nodes needed to be explored
+  closedlist = [] #stores nodes already explored
+  currentchildren = [] #stores children of current node
+  path = [] #stores final path to solution
+
+  GOAL = Tomatrix(GOALSTATE) #creates matrix of goal
+  
+  
+  currentnode = ManNode(0, Mymatrix, None, 0) #initializes current node
+  openlist.append(currentnode) #adds current node to open list
+
+  
+  
+  #starts search
+  while len(openlist) != 0:
+    blockPrint() #prevents garbage printing to screen
+    inopen = False #resets with every new node
+    evaluated = False #resets with every new node
+
+    currentnode = openlist[0] #makes current node the node with lowest f(n) = g(n) + h(n)
+
+    if currentnode.state == GOAL: #seees if current node is goal and breaks if it is
+      break
+    
+    openlist.pop(0) #removes current node from open list
+
+    closedlist.append(currentnode) #adds current node to closed list
+
+    #This create the children of the current node and adds it to current children list
+    if currentnode.cantmove != 1 and CanMove(currentnode.state, 1):
+      child = MoveUP(currentnode.state)
+      childnode = ManNode(currentnode.level + 1, child, currentnode, 2)
+      currentchildren.append(childnode)
+
+    if currentnode.cantmove != 2 and CanMove(currentnode.state, 2):
+      child = MoveDown(currentnode.state)
+      childnode = ManNode(currentnode.level + 1, child, currentnode, 1)
+      currentchildren.append(childnode)
+
+    if currentnode.cantmove != 3 and CanMove(currentnode.state, 3):
+      child = MoveLeft(currentnode.state)
+      childnode = ManNode(currentnode.level + 1, child, currentnode, 4)
+      currentchildren.append(childnode)
+
+    if currentnode.cantmove != 4 and CanMove(currentnode.state, 4):
+      child = MoveRight(currentnode.state)
+      childnode = ManNode(currentnode.level + 1, child, currentnode, 3)
+      currentchildren.append(childnode)
+
+    
+    
+   
+    #iterates through child list to evaluate each childnode
+    for z in currentchildren:
+      #sees if child of current node has already been visited
+      for c in closedlist:
+        if z.state == c.state:
+          evaluated = True
+          break
+
+      #sees if path to child is better than current path
+      if evaluated == False:
+        for i in openlist:
+          if i.state == z.state:
+            inopen = True
+            if z.level < i.level:
+              i = z
+              inopen = True
+              break
+      
+      #adds child to open list if it isnt there
+      if inopen == False:
+        openlist.append(z)
+
+    
+    
+    
+
+    openlist.sort(key=lambda z: z.val, reverse=False) #sorts openlist based on f(n) value
+
+    currentchildren = [] #empties children list
+
+    
+
+  
+  enablePrint() #renables printing
+    
+  #creates path/solution 
+  while currentnode != None:
+    path.append(currentnode.state)
+    currentnode = currentnode.parent
+
+  #prints solution to screen
+  path.reverse()
+  print("\n")
+  print("\nHere is the solution:\n")
+  for w in path:
+    for q in w:
+      print(q)
+    print("\n")
+
+#This finds solution using number of misplaced tiles heuristic 
+def TileSearch(matrix):
+
+  Mymatrix = copy.deepcopy(matrix) #creates copy of given matrix
+  openlist = [] # stores nodes to be explored
+  closedlist = [] #sores nodes already expolored
+  currentchildren = [] #stores children of current node
+  path = [] #stores path/solution
+
+  GOAL = Tomatrix(GOALSTATE) #creates matrix of goal node
+  
+  currentnode = TileNode(0, Mymatrix, None, 0) #creates starting node
+  openlist.append(currentnode) #adds starting node to open list
+
+  
+  
+  #starts search
+  while len(openlist) != 0:
+    blockPrint() #stops garbage from printing
+    inopen = False
+    evaluated = False
+
+    currentnode = openlist[0] #assigns current node from open list
+
+    if currentnode.state == GOAL: #sees if current node is goal
+      break
+    
+    openlist.pop(0) #removes current node from open list
+
+    closedlist.append(currentnode) # adds current node to open list
+
+    #creates children of current node
+    if currentnode.cantmove != 1 and CanMove(currentnode.state, 1):
+      child = MoveUP(currentnode.state)
+      childnode = TileNode(currentnode.level + 1, child, currentnode, 2)
+      currentchildren.append(childnode)
+
+    if currentnode.cantmove != 2 and CanMove(currentnode.state, 2):
+      child = MoveDown(currentnode.state)
+      childnode = TileNode(currentnode.level + 1, child, currentnode, 1)
+      currentchildren.append(childnode)
+
+    if currentnode.cantmove != 3 and CanMove(currentnode.state, 3):
+      child = MoveLeft(currentnode.state)
+      childnode = TileNode(currentnode.level + 1, child, currentnode, 4)
+      currentchildren.append(childnode)
+
+    if currentnode.cantmove != 4 and CanMove(currentnode.state, 4):
+      child = MoveRight(currentnode.state)
+      childnode = TileNode(currentnode.level + 1, child, currentnode, 3)
+      currentchildren.append(childnode)
+
+    
+    
+   
+    #goes through every child of current node
+    for z in currentchildren:
+      #sees if current child has already been explored
+      for c in closedlist:
+        if z.state == c.state:
+          evaluated = True
+          break
+      #sees if current path to child is the best
+      if evaluated == False:
+        for i in openlist:
+          if i.state == z.state:
+            inopen = True
+            if z.level < i.level:
+              i = z
+              inopen = True
+              break
+      #adds child to open list if not there
+      if inopen == False:
+        openlist.append(z)
+
+      
+
+
+    
+    #sorts open list based on f(n) value
+    openlist.sort(key=lambda z: z.val, reverse=False)
+
+    currentchildren = [] #empties current children for next node
+
+    
+
+
+  enablePrint() #reenables printing
+    
+  # Creates path to solution
+  while currentnode != None:
+    path.append(currentnode.state)
+    currentnode = currentnode.parent
+
+  #prints solution to screen. 
+  path.reverse()
+  print("\n")
+  print("\nHere is the solution:\n")
+  for w in path:
+    for q in w:
+      print(q)
+    print()
+
+firstanswer = 'y'
+
+# main function for user
+while firstanswer == 'y' or firstanswer == 'Y':
+
+  boardlist = []
+  goalmatrix = Tomatrix(GOALSTATE)
+
+  # Greets user and presents goal
+  print("\nHello, Welcome to the 15 Puzzle Solver")
+  print("\nThis is the goal that needs to be reached:")
+  for x in goalmatrix:
+    print(x)
+
+  # Prompts user for input
+  ownboard = input("\nWould You Like to enter your own board? (y or n) \n")
+
+  if ownboard == 'y' or ownboard == 'Y':
+    print("\nPlease enter your desired board using numbers between 0 and 15 seperated \nby a comma and a single space (12, 34). ")
+    print("The board will be filled row by row from top to bottom")
+    print("This will be used for your current board. The number 0 will be")
+    print("used as the empty tile. ")
+
+    boardlist = (input("\n")).split(", ") #creates list from user input
+
+    #turns user input into integers
+    try:
+      for x in range(0, len(boardlist)):
+        boardlist[x] = int(boardlist[x])
+    except ValueError:
+      print("")
+
+    #sees if user entered a valid board
+    if CanCalc(boardlist) and len(boardlist) == 16:
+            boardmatrix = Tomatrix(boardlist)
+            print("\nYour board has been created:\n")
+            for x in boardmatrix:
+                print(x)
+
+    #informs user if entered board is invalid
+    else:
+      print("\nSorry, the board you entered can't be solved.")
+      print("Another board has been created for you")
+      boardlist = []
+
+  # tells user a board has been created for them 
+  else:
+    print("\nOkay. A board has been created for you. ")
+    
+  #prompts user for heuristic
+  print("\n\nWould you like to use Manhattan Distance heuristic (M), or number\nof misplaced tiles heuristic (T)? Please keep in mind the time may\nvary depending on board and chosen heuristic ")
+
+  Answer = input("Enter which one to use (M or T) ")
+
+  #runs heuristic based on anser from user and a board was given or not
+  if Answer == 't' or Answer == 'T':
+    if len(boardlist) == 0:
+      boardlist = [0, 1, 2, 4, 6, 7, 3, 8, 5, 9, 11, 12, 13, 10, 14, 15]
+      #0, 1, 2, 4, 6, 7, 3, 8, 5, 9, 11, 12, 13, 10, 14, 15
+    
+    print("\nHere is the current board with 0 as the empty tile:\n\n")
+    
+    boardmatrix = Tomatrix(boardlist)
+    for x in boardmatrix:
+      print(x)
+    print("\nI'm thinking.....Could take a minute or so depending on heuristic.....\n")
+    import time
+    time.sleep(5)
+    TileSearch(boardmatrix)
+
+  elif Answer == 'm' or Answer == 'M':
+    if len(boardlist) == 0:
+      boardlist = [5, 2, 3, 6, 7, 0, 8, 11, 1, 9, 4, 10, 13, 14, 15, 12]
+    
+    print("\nHere is the current board with 0 as the empty tile:\n\n")
+    boardmatrix = Tomatrix(boardlist)
+    for x in boardmatrix:
+      print(x)
+    print("\nI'm thinking.....Could take a minute or so depending on heuristic.....\n")
+    ManhattanSearch(boardmatrix)
+
+  firstanswer = input("Would you like to try again? (y or n) ")
